@@ -1,0 +1,67 @@
+version: '2'
+
+networks:
+  app-tier:
+    driver: bridge
+
+services:
+  postgresql:
+    image: bitnami/postgresql:13-debian-10
+    hostname: postgres
+    domainname: cndlms.com
+    networks:
+      - app-tier
+    ports:
+      - '5432:5432'
+    volumes:
+      - 'postgresql_data:/bitnami/postgresql'
+    environment:
+      - 'ALLOW_EMPTY_PASSWORD=yes'
+      - POSTGRESQL_USERNAME=postgres
+      - POSTGRESQL_PASSWORD=pgpass
+      - POSTGRESQL_DATABASE=metastore
+    container_name: postgresql
+
+  hive:
+    image: gentijo/hive:v0.1
+    hostname: hive
+    domainname: cndlms.com
+
+    networks:
+      - app-tier
+
+    ports:
+      - '10000:10000'
+      - '10002:10002'
+    container_name: hive
+    depends_on:
+      postgresql:
+        condition: service_started
+
+  zeppelin:
+    image: gentijo/zeppelin:v0.1
+    hostname: zeppelin
+    domainname: cndlms.com
+    networks:
+      - app-tier
+
+    ports:
+      - '8080:8080'
+    container_name: zep
+    depends_on:
+      hive:
+        condition: service_started
+
+  presto:
+    image: ahanaio/prestodb-sandbox
+    hostname: presto
+    domainname: cndlms.com
+    networks:
+      - app-tier
+    ports:
+      - '8090:8090'
+    container_name: presto
+
+volumes:
+  postgresql_data:
+    driver: local
