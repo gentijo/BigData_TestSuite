@@ -10,7 +10,10 @@ services:
     hostname: postgres
     domainname: cndlms.com
     networks:
-      - app-tier
+      app-tier:
+        aliases:
+          - database
+
     ports:
       - '5432:5432'
     volumes:
@@ -26,17 +29,17 @@ services:
     image: gentijo/hive:v0.1
     hostname: hive
     domainname: cndlms.com
-
     networks:
-      - app-tier
-
+      app-tier:
+        aliases:
+          - hdfs
+          - hadoop
     ports:
       - '10000:10000'
       - '10002:10002'
     container_name: hive
     depends_on:
-      postgresql:
-        condition: service_started
+      - postgresql
 
   zeppelin:
     image: gentijo/zeppelin:v0.1
@@ -49,17 +52,16 @@ services:
       - '8080:8080'
     container_name: zep
     depends_on:
-      hive:
-        condition: service_started
+      - hive
 
   presto:
-    image: ahanaio/prestodb-sandbox
+    image: gentijo/presto:v0.1
     hostname: presto
     domainname: cndlms.com
     networks:
       - app-tier
     ports:
-      - '8090:8090'
+      - '9080:8080'
     container_name: presto
 
 volumes:
